@@ -1,27 +1,44 @@
 import torch
-from transformers import BertTokenizer, BertForTokenClassification
+from transformers import BertTokenizerFast, BertForTokenClassification
 from transformers import pipeline
+import re
 
-model_name = "ckiplab/bert-base-chinese-ner"
-tokenizer = BertTokenizer.from_pretrained(model_name)
-model = BertForTokenClassification.from_pretrained(model_name)
+def extract_chinese(text):
+    chinese_characters = re.findall(r'[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]', text)
+    return ''.join(chinese_characters)
 
-# 使用pipeline进行命名实体识别
-nlp_ner = pipeline("ner", model=model, tokenizer=tokenizer)
+def is_chinese_symbol(c):
+    return (c >= u'\u3000' and c <= u'\u303f') or (c >= u'\uff00' and c <= u'\uffef')
 
-# 要进行NER的中文句子
-sentence = "中央研究院是臺灣最高學術研究機構，成立於1928年。"
+def get_ner_results(sentence: str):
+    model_name = "ckiplab/bert-base-chinese-ner"
+    tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
+    model = BertForTokenClassification.from_pretrained(model_name)
 
-# 进行NER
-ner_results = nlp_ner(sentence)
+    nlp_ner = pipeline("ner", model=model, tokenizer=tokenizer)
 
-# 打印NER结果
-print("命名实体识别结果：")
-for entity in ner_results:
-    print(f"Entity: {entity['word']}, Label: {entity['entity']}, Score: {entity['score']:.4f}")
+    sentence = extract_chinese(sentence)
+    # delete substring "aabb"
+    sentence = re.sub(r'微軟正黑體', '', sentence)
 
-# 将NER结果格式化输出
-formatted_results = [(entity['word'], entity['entity'], entity['score']) for entity in ner_results]
-print("\n格式化的NER结果：")
-for word, label, score in formatted_results:
-    print(f"Word: {word}, Label: {label}, Score: {score:.4f}")
+    ner_results = []
+    s = ''
+    for i in range(0, len(sentence)):
+        s += sentence[i]
+        if len(s) >= 512 or is_chinese_symbol(sentence[i]):
+            s = s[:-1]
+            ner_results.extend(nlp_ner(s))
+            print(s)
+            print(nlp_ner(s))
+            s = ''
+        
+    
+    #print(ner_results)
+
+    formatted_results = [(entity['word'], entity['entity'], round(entity['score'], 2)) for entity in ner_results]
+
+    return formatted_results
+
+if __name__ == '__main__':
+    sentence = "中研院"
+    print(get_ner_results(sentence))
