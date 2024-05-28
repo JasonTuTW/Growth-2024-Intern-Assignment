@@ -13,8 +13,11 @@ def update_results_to_gsheet(parsed_result, segmented_results):
             ' '.join(segmented_results[i][:300])
         ]
 
-    sh = gc.open('Web Crawl')
+    sh = gc.open('psy-counseling-crawling')
 
     wks = sh[0]  
 
-    wks.set_dataframe(df,(0,0))
+    wks.set_dataframe(df,(0,0),encoding='utf-8')
+
+if __name__ == '__main__':
+    update_results_to_gsheet([{'title': 'title1', 'link': 'link1'}, {'title': 'title2', 'link': 'link2'}], [['word1', 'word2'], ['word3', 'word4']])

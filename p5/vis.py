@@ -3,8 +3,14 @@ from matplotlib import rcParams
 import seaborn as sns
 from collections import Counter
 
+import unicodedata
+
 def meaningful_word(word):
-    return word.strip(' ，．。！？、：；,.;:!?·.-「」一\xa0') != ''
+    for c in word:
+        if not ('\u4e00' <= c <= '\u9fff'):
+            return False
+
+    return True
 
 def plot_keyword_frequency(segmented_results):
     words = [word for result in segmented_results for word in result]

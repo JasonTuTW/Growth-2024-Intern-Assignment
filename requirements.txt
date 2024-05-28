@@ -2,3 +2,6 @@ beautifulsoup4
 ckip-transformers
 pygsheets
 seaborn
+requests-html
+lxml_html_clean 
+tqdm
